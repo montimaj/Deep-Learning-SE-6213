@@ -103,55 +103,55 @@ __$L = L + \frac{reg*(\sum_{n=1}^{N} {w_n^2})}{N}$__
 """
 
 # # Import the functions
-# from layers import *
-# from utils import *
-# # Set up the packages
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import matplotlib as mpl
-#
-# # Load the training data
-# inputs, labels = load_images_with_labels()
-#
-# # View first 8 examples
-# fig, ax = plt.subplots(1,8)
-# labl = []
-# for i in range(8):
-#     ax[i].imshow(inputs[i], cmap=mpl.cm.Greys)
-#     ax[i].set_title(labels[i])
-# plt.show()
-#
-# # Pre-processing the data
-# train=inputs.reshape(60000,784) # reshape the inputs shape from (60000,28,28) to (60000,784)
-# train = np.float32(train) # change the datatype to float
-# train /= np.max(train,axis=1).reshape(-1, 1) # Normalize the data between 0 and 1
-#
-# # Now we separate the inputs into training and validation
-# train_ = train[0:50000,:] # We use first 50000 images for training
-# tr_labels = labels[0:50000]
-# val = train[50000:60000,:] # We use the last 10000 images for validation
-# val_labels = labels[50000:60000]
-# data = {'train':train_,'tr_targets':tr_labels,'val':val,'tr_val':val_labels}
-#
-# # Initialize two_layered_NN instance
-# from n_model import n_layered_NN
-# model = n_layered_NN(data,regularization_type='L2',learning_rate=0.01,reg=0.01)
-#
-# # Train the two layered neural network
-# _,_,train_acc_history,val_acc_history=model.train()
-#
-# # print best accuracies
-# print('Best accuracy on training data: '+str(np.max(train_acc_history)))
-# print('Best accuracy on test data :'+str(np.max(val_acc_history)))
-#
-# # Plot the accuracy curves
-# plt.plot(np.subtract(1,train_acc_history),'g--',label='Training')
-# plt.plot(np.subtract(1,val_acc_history),'r--',label='Validation')
-# plt.legend()
-# plt.xlabel('epoch')
-# plt.ylabel('% error')
-# plt.title('Error Curves with L2 regularization')
-# plt.show()
+from layers import *
+from utils import *
+# Set up the packages
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+# Load the training data
+inputs, labels = load_images_with_labels()
+
+# View first 8 examples
+fig, ax = plt.subplots(1,8)
+labl = []
+for i in range(8):
+    ax[i].imshow(inputs[i], cmap=mpl.cm.Greys)
+    ax[i].set_title(labels[i])
+plt.show()
+
+# Pre-processing the data
+train=inputs.reshape(60000,784) # reshape the inputs shape from (60000,28,28) to (60000,784)
+train = np.float32(train) # change the datatype to float
+train /= np.max(train,axis=1).reshape(-1, 1) # Normalize the data between 0 and 1
+
+# Now we separate the inputs into training and validation
+train_ = train[0:50000,:] # We use first 50000 images for training
+tr_labels = labels[0:50000]
+val = train[50000:60000,:] # We use the last 10000 images for validation
+val_labels = labels[50000:60000]
+data = {'train':train_,'tr_targets':tr_labels,'val':val,'tr_val':val_labels}
+
+# Initialize two_layered_NN instance
+from n_model import n_layered_NN
+model = n_layered_NN(data,regularization_type='L2',learning_rate=0.01,reg=0.01)
+
+# Train the two layered neural network
+_,_,train_acc_history,val_acc_history=model.train()
+
+# print best accuracies
+print('Best accuracy on training data: '+str(np.max(train_acc_history)))
+print('Best accuracy on test data :'+str(np.max(val_acc_history)))
+
+# Plot the accuracy curves
+plt.plot(np.subtract(1,train_acc_history),'g--',label='Training')
+plt.plot(np.subtract(1,val_acc_history),'r--',label='Validation')
+plt.legend()
+plt.xlabel('epoch')
+plt.ylabel('% error')
+plt.title('Error Curves with L2 regularization')
+plt.show()
 
 # """By implementing the $L2$ regularization, you should get the final training accuracy $\sim$ 95-96% and validation accuracy $\sim$ 95-96%.
 #
@@ -178,55 +178,55 @@ __$L = L + \frac{reg*(\sum_{n=1}^{N} {w_n^2})}{N}$__
 # """
 #
 # Import the functions
-from layers import *
-from utils import *
-# Set up the packages
-import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib as mpl
+# from layers import *
+# from utils import *
+# # Set up the packages
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib as mpl
 
 # Load the training data
-inputs, labels = load_images_with_labels()
-
-# View first 8 examples
-fig, ax = plt.subplots(1,8)
-labl = []
-for i in range(8):
-    ax[i].imshow(inputs[i], cmap=mpl.cm.Greys)
-    ax[i].set_title(labels[i])
-plt.show()
-
-# Pre-processing the data
-train=inputs.reshape(60000,784) # reshape the inputs shape from (60000,28,28) to (60000,784)
-train = np.float32(train) # change the datatype to float
-train /= np.max(train,axis=1).reshape(-1,1) # Normalize the data between 0 and 1
-
-# Now we separate the inputs into training and validation
-train_ = train[0:50000,:] # We use first 50000 images for training
-tr_labels = labels[0:50000]
-val = train[50000:60000,:] # We use the last 10000 images for validation
-val_labels = labels[50000:60000]
-data = {'train':train_,'tr_targets':tr_labels,'val':val,'tr_val':val_labels}
-
-# Initialize two_layered_NN instance
-from n_model import n_layered_NN
-model = n_layered_NN(data,regularization_type='dropout',learning_rate=0.01)
-
-# Train the two layered neural network
-_,_,train_acc_history,val_acc_history=model.train()
-
-# print best accuracies
-print('Best accuracy on training data: '+str(np.max(train_acc_history)))
-print('Best accuracy on test data :'+str(np.max(val_acc_history)))
-
-# Plot the accuracy curves
-plt.plot(np.subtract(1,train_acc_history),'g--',label='Training')
-plt.plot(np.subtract(1,val_acc_history),'r--',label='Validation')
-plt.legend()
-plt.xlabel('epoch')
-plt.ylabel('% error')
-plt.title('Error Curves with dropout')
-plt.show()
+# inputs, labels = load_images_with_labels()
+#
+# # View first 8 examples
+# fig, ax = plt.subplots(1,8)
+# labl = []
+# for i in range(8):
+#     ax[i].imshow(inputs[i], cmap=mpl.cm.Greys)
+#     ax[i].set_title(labels[i])
+# plt.show()
+#
+# # Pre-processing the data
+# train=inputs.reshape(60000,784) # reshape the inputs shape from (60000,28,28) to (60000,784)
+# train = np.float32(train) # change the datatype to float
+# train /= np.max(train,axis=1).reshape(-1,1) # Normalize the data between 0 and 1
+#
+# # Now we separate the inputs into training and validation
+# train_ = train[0:50000,:] # We use first 50000 images for training
+# tr_labels = labels[0:50000]
+# val = train[50000:60000,:] # We use the last 10000 images for validation
+# val_labels = labels[50000:60000]
+# data = {'train':train_,'tr_targets':tr_labels,'val':val,'tr_val':val_labels}
+#
+# # Initialize two_layered_NN instance
+# from n_model import n_layered_NN
+# model = n_layered_NN(data,regularization_type='dropout',learning_rate=0.01)
+#
+# # Train the two layered neural network
+# _,_,train_acc_history,val_acc_history=model.train()
+#
+# # print best accuracies
+# print('Best accuracy on training data: '+str(np.max(train_acc_history)))
+# print('Best accuracy on test data :'+str(np.max(val_acc_history)))
+#
+# # Plot the accuracy curves
+# plt.plot(np.subtract(1,train_acc_history),'g--',label='Training')
+# plt.plot(np.subtract(1,val_acc_history),'r--',label='Validation')
+# plt.legend()
+# plt.xlabel('epoch')
+# plt.ylabel('% error')
+# plt.title('Error Curves with dropout')
+# plt.show()
 
 # """You should get similar performance as that of $L2$ regularization"""
 #

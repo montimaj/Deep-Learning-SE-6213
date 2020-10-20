@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>CNN_Demo</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<div class="well well-sm" style="font-size:8px; color:white; background-color: hsl(180, 100%, 15%);text-align: center; font-family: Serif; font-weight: normal;">
+    <h1>SE 6213: Convolutional and Pooling Layer Simulation</h1>      
+  </div>
+
+<div class="container" style="background-color:white">
+
+	<h2 style="font-family: arial; font-weight: normal;font-size: 20px">Contents</h2>
+	<ol>
+		<li><a href="#i" style="text-decoration: none;color: blue">Introduction</a></li>
+		<li><a href="#lc" style="text-decoration: none;color: blue">Layers in CovNets</a></li>
+		<li><a href="#cl" style="text-decoration: none;color: blue">Convolutional Layer</a></li>
+		<li><a href="#pl" style="text-decoration: none;color: blue">Pooling Layer</a></li>
+		<li><a href="#FBs" style="text-decoration: none;color: blue">Fully Connected Layers</a></li>
+		<li><a href="#ios" style="text-decoration: none;color: blue">Interesting Observations</a></li>
+		<li><a href="#cc" style="text-decoration: none;color: blue">Computational Considerations</a></li>
+		<li><a href="#ar" style="text-decoration: none;color: blue">Additional References</a></li>
+	</ol>
+
+
+	<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="i">Introduction</h2>
+	<p style="text-align: justify">So far, you have trained regular neural network on images using different concepts like optimization, regularization, back-propagation etc. In each neural network models, the input was given as an n-dimensional array (i.e. we converted 3x32x32 images to a 1x3072 array for CIFAR-10 dataset) to the network. The number of connections that are required to connect the input to a single neuron in the following hidden layer is 3072. Since we use multiple neurons and layers while training, the number of connections further increase. Also, if the image size increases (say 3x100x100), the number of connections that are required also increase (30000). This puts a huge load on CPU even though the number of hidden layers is small as the weight updates in each layer have to be done simultaneously. 
+	CNN's overcome this disadvantage by making the explicit assumption that the inputs are images (i.e. inputs are given as 3x32x32 and not as 1x3072), which allows us to encode certain properties into the architecture. In order to learn from inputs which have a depth(D), height(H) and width(W), we use kernels/filters which also have depth (d), height (h) and width (w) such that w&ltW, h&ltH and d=D. These filters slide over the input image and take the dot product at each position thereby providing the input for the following layer. This reduces the number of connections required at each layer and at the same time increases the possibility of designing very deep networks. Below is a vizualization of simple covnet. As you will soon see, this approach of training provides much more capabilities which is not possible using regular neural networks.
+	</p> 
+
+	<p style="text-align: center;"><img src="conv_demo.png" alt="Simple CovNet" style="width:1000px;height:300px;"></p>
+	<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="lc">Layers in CovNets</h2>
+
+	<p style="text-align: justify">CovNets use three types of layers to build a CovNet architecture: convolutional layer, pooling layer and fully connected layer. We will go into more details below, but a simple ConvNet for CIFAR-10 classification could have the architecture [INPUT - CONV - RELU - POOL - FC] as shown in fig 1.  
+	<ul>
+		<li>Input layer: Images of shape (N,3,32,32).</li>
+		<li>Convolutional layers: Computes convolutional output by calculating the dot products as the filter slides over the image. The output dimensions will be (N,30,32,32) if we decide to use 30 filters.</li>
+		<li>Pooling layer: Performs downsamplig of the input (which is usually from convolutional layer). </li>
+		<li>Fully connected layer: Computes the class scores, therefore will have dimensions of (N,1,1,10). This layer resembles a regular neural network. </li>
+	</ul>
+	</p>
+
+	<p style="text-align: justify">
+	The choice of the activation functions, regularization, optimizations that should be used within these layers will depend on individual who is training on the data.  </p>
+	<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="cl">Convolutional Layer</h2>
+	<p style="text-align: justify;font-size: 19">Summary:</p>
+	<p style="text-align: justify">Let us assume N=1 as it is easy to vizualize for 1 input rather than a batch of images.</p>
+	<ul>
+		<li>Input: Image of dimensions: DxWxH (D - depth, W - width, H - height)</li>
+		<li>Initialize the following hyperparameters:</li>
+		<ul style="list-style-type: circle;">
+			<li>padding (P)</li>
+			<li>dimensions of filter</li>
+			<li>number of filters (K)</li>
+			<li>stride (S)</li>
+		</ul>
+		<li>Slide each filter over the input image to produce output of dimensions D<sub>2</sub>xW<sub>2</sub>xH<sub>2</sub>where:</li>
+		<ul style="list-style-type: circle;">
+			<li>W<sub>2</sub>=(W<sub>1</sub>-F+2P)/S+1</li>
+			<li>H<sub>2</sub>=(H<sub>1</sub>-F+2P)/S+1</li>
+			<li>D<sub>2</sub> = K</li>
+		</ul>
+	</ul>
+	<p style="text-align: justify">Note: Play with the below vizualization to understand the idea behind padding and stride.</p>
+
+	<p style="text-align: justify">Observe how the output matrix is calculated for given RGB image using the filters. The dimensions of the convolutional layer is reduced from 3x5x5 to 3x3x3. When we use multiple convolutional layers, the output will diminish to very low dimensions and this is not suitable for deep CNN's. In order to prevent this, we pad the input image with 0's such that the dimension of the output is not changed. Click on 'add pad' button and observe the output matrix. Note that padding is a hyper-parameter just like learning rate/momentum. </p>
+	    
+	<p style="text-align: justify">The dimensions of output is also controlled by the stride. When the stride is 1 then we move the filters one pixel at a time. When the stride is 2 then the filters jump 2 pixels at a time as we slide them around. This will produce smaller output volumes spatially.</p>
+
+
+  <hr style=" height: 1px; background-color:#888888;" />
+  <div class="row">
+    <div class="col-xs-3" >
+    
+    			<table class="table table-condensed table-bordered table-fixed text-center" id="R" style="background-color: white; width: 70%">
+	         	<caption id="caption_1">Input Image with no padding (3x5x5)</caption>
+	  		 	<caption>R: x[1 , : , :]</caption>
+	  		 	<tr>
+	    			<td>4</td>
+	    			<td>1</td>
+	    			<td>0</td>
+	    			<td>3</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>2</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>4</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>1</td>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>3</td>
+	    			<td>4</td>
+	  			</tr>
+	  			<tr>
+	    			<td>2</td>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>0</td>
+	    			<td>3</td>
+	  			</tr>
+	  			<tr>
+	    			<td>2</td>
+	    			<td>1</td>
+	    			<td>4</td>
+	    			<td>2</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+
+				<table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 70%" id="G">
+	  		 	<caption>G: x[2 , : , :]</caption>
+	  		 	<tr>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>3</td>
+	    			<td>2</td>
+	  			</tr>
+	  			<tr>
+	    			<td>3</td>
+	    			<td>3</td>
+	    			<td>2</td>
+	    			<td>4</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>4</td>
+	    			<td>1</td>
+	    			<td>2</td>
+	    			<td>1</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>4</td>
+	    			<td>1</td>
+	    			<td>0</td>
+	    			<td>1</td>
+	    			<td>2</td>
+	  			</tr>
+	  			<tr>
+	    			<td>3</td>
+	    			<td>2</td>
+	    			<td>2</td>
+	    			<td>0</td>
+	    			<td>3</td>
+	  			</tr>
+				</table>
+
+				<table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 70%;" id="B">
+	  		 	<caption>B: x[3 , : , :]</caption>
+	  		 	<tr>
+	    			<td>3</td>
+	    			<td>3</td>
+	    			<td>0</td>
+	    			<td>1</td>
+	    			<td>1</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>4</td>
+	    			<td>3</td>
+	    			<td>4</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>2</td>
+	    			<td>0</td>
+	    			<td>2</td>
+	    			<td>4</td>
+	    			<td>3</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>4</td>
+	    			<td>1</td>
+	    			<td>3</td>
+	    			<td>1</td>
+	  			</tr>
+	  			<tr>
+	    			<td>1</td>
+	    			<td>2</td>
+	    			<td>3</td>
+	    			<td>1</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+    
+    </div>
+    <div class="col-xs-3" >
+    
+    <table class="table table-condensed table-bordered table-fixed text-center" style="background-color: pink;width: 40%;" id="f1">
+		        <caption>filter f = (3x3x3)</caption>
+	  		 	<caption>f [1 , : , :]</caption>
+	  		 	<tr>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>2</td>
+	  			</tr>
+	  			<tr>
+	    			<td>3</td>
+	    			<td>3</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>1</td>
+	    			<td>1</td>
+	  			</tr>
+				</table>
+
+	 <table class="table table-condensed table-bordered table-fixed text-center" style="background-color: LightGreen;width: 40%;" id="f2">
+		        
+	  		 	<caption>f [2 , : , :]</caption>
+	  		 	<tr>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>2</td>
+	  			</tr>
+	  			<tr>
+	    			<td>3</td>
+	    			<td>3</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>1</td>
+	    			<td>1</td>
+	  			</tr>
+				</table>
+
+	 <table class="table table-condensed table-bordered table-fixed text-center" style="background-color: LightSkyBlue;width: 40%;" id="f3">
+		        
+	  		 	<caption>f [3 , : , :]</caption>
+	  		 	<tr>
+	    			<td>4</td>
+	    			<td>4</td>
+	    			<td>2</td>
+	  			</tr>
+	  			<tr>
+	    			<td>3</td>
+	    			<td>3</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>1</td>
+	    			<td>1</td>
+	  			</tr>
+				</table>
+    
+    </div>
+    <div class="col-xs-3" >
+
+    <table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 40%;" id="o1">
+		   	    <caption>Intermediate output</caption>
+	  		 	<caption>io[1 , : , :]</caption>
+	  		 	<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+
+	<table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 40%;" id="o2">
+		   	    
+	  		 	<caption>io[2 , : , :]</caption>
+	  		 	<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+
+	<table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 40%;" id="o3">
+		   	    
+	  		 	<caption>io[3 , : , :]</caption>
+	  		 	<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+  </div>
+
+
+    <div class="col-xs-3" >
+
+    <table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 40%;" id="op">
+		   	    <caption>CNN Layer output</caption>
+	  		 	
+	  		 	<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			<td>0</td>
+	  			</tr>
+				</table>
+	</div>
+
+</div>
+
+<button onclick="backward()" class="btn btn-info" ;"><<</button>
+<button onclick="forward()" class="btn btn-info">>></button>
+<br>
+<br>
+<button onclick="pad()" id="pad_button" class="btn btn-info">Add Padding</button>
+<p>In the above example, we assumed stride = 1. </p>
+
+<p style="text-align: justify">Backward Pass: During the backward pass the updates happen as the gradients slide over the input just like in the forward pass.</p>
+
+<hr style=" height: 1px; background-color:#888888;" />
+
+<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="pl">Pooling layer</h2>
+
+	<p style="text-align: justify;font-size: 19">Summary:</p>
+
+	<ul>
+		<li>Input Dimensions D<sub>1</sub>xW<sub>1</sub>xH<sub>1</sub></li>
+		<li>Initialize parameters:</li>
+		<ul style="list-style-type: circle;">
+			<li>spatial extent F</li>
+			<li>stride S</li>
+		</ul>
+		<li>Produce output of dimensions D<sub>2</sub>xW<sub>2</sub>xH<sub>2</sub> where:</li>
+		<ul style="list-style-type: circle;">
+			<li>W<sub>2</sub>=(W<sub>1</sub>-F)/S+1</li>
+			<li>H<sub>2</sub>=(H<sub>1</sub>-F)/S+1</li>
+			<li>D<sub>2</sub>=D<sub>1</sub></li>
+		</ul>
+	</ul>
+
+<p style="padding-left: 0cm;padding-right: 5cm;text-align: justify">Pooling layer is generally used in between successive convolutional layers. Its main purpose is to reduce the spatial dimension of across the layers. This raises a question, why to use pooling when convolutional layer can reduce the dimension when no padding is used. The difference is that pooling layer just resizes its input by averaging over fixed number of pixels (therefore output will have all importatn structures that are inherent in the input) while the convolutional layer changes the features that can be identified with/ without padding. Note that padding is not commonly used for pooling layer.</p>
+<p style="padding-left: 0cm;padding-right: 5cm;text-align: justify">The Pooling Layer operates independently on every depth slice of the input and resizes it spatially, using the MAX operation. The most common form is a pooling layer with filters of size 2x2 applied with a stride of 2 downsamples every depth slice in the input by 2 along both width and height, discarding 75% of the activations. Every MAX operation would in this case be taking a max over 4 numbers (little 2x2 region in some depth slice). The depth dimension remains unchanged. </p>
+
+<hr style=" height: 1px; background-color:#888888;" />
+  <div class="row">
+    <div class="col-xs-3" >
+    
+    			<table class="table table-condensed table-bordered table-fixed text-center" id="pi" style="background-color: white; width: 70%">
+	         	<caption id="caption_1">Pooling Input</caption>
+	  		 	
+	  		 	<tr>
+	    			<td>1</td>
+	    			<td>3</td>
+	    			<td>12</td>
+	    			<td>24</td>
+	    			<td>22</td>
+	  			</tr>
+	  			<tr>
+	    			<td>53</td>
+	    			<td>32</td>
+	    			<td>24</td>
+	    			<td>27</td>
+	    			<td>21</td>
+	  			</tr>
+	  			<tr>
+	    			<td>73</td>
+	    			<td>30</td>
+	    			<td>24</td>
+	    			<td>52</td>
+	    			<td>12</td>
+	  			</tr>
+	  			<tr>
+	    			<td>17</td>
+	    			<td>40</td>
+	    			<td>62</td>
+	    			<td>32</td>
+	    			<td>22</td>
+	  			</tr>
+	  			<tr>
+	    			<td>37</td>
+	    			<td>60</td>
+	    			<td>32</td>
+	    			<td>42</td>
+	    			<td>25</td>
+	  			</tr>
+				</table>
+
+		</div>
+
+		<div class="col-xs-3" >
+
+    	<table class="table table-condensed table-bordered table-fixed text-center" style="background-color: white;width: 40%;" id="po">
+		   	    <caption>Pooling output</caption>
+	  		 
+	  		 	<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    		
+	  			</tr>
+	  			<tr>
+	    			<td>0</td>
+	    			<td>0</td>
+	    			
+	  			</tr>
+	  			
+				</table>
+	</div>
+
+	</div>
+<button onclick="p_forward()" class="btn btn-info" ;">>></button>
+<p style="text-align: justify">In the above example, we chose the stride = 2</p>
+<p style="text-align: justify">Backward Pass: The backward pass for pooling layer will be similar to that of dropout. Only the max values which are considered during forward pass will be updated.</p>
+<hr style=" height: 1px; background-color:#888888;" />
+
+<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="FBs">Fully Connected Layers</h2>
+<p style="text-align: justify">The fully connected layers are identical to regular neural networks. The forward and backward step functions which was written previously was capable of finding the dot product of dimensions (N,D).(D,C). However, the dot product with kernels is slightly complicated as the dimensions are in shape (N,D,W,H). In order to facilitate both (N,D) and (N,D,W,H) shapes, you need to modify the functions appropriately.</p>
+
+<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="ios">Interesting Observations</h2>
+
+<p style="text-align: center;">
+		
+	  <iframe width="500" height="345" src="https://www.youtube.com/embed/AgkfIQ4IGaM"></iframe>
+</p>
+
+<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="cc">Computational Considerations</h2>
+<p style="text-align: justify">Since we are not aiming to write optimized version of code for CNN, we will only implement the convolutional and pooling functions and run it on small sample dataset. You will use tensorflow to implement the same architecture on complete training and testing dataset.</p>
+
+<h2 style="font-family: arial; font-weight: normal;font-size: 20px;" id="ar">Additional References</h2>
+<ul>
+	<li><a href="http://deeplearning.net/tutorial/lenet.html" style="text-decoration: none;color: blue">CNN Tutorial </a></li>
+	<li><a href="https://ujjwalkarn.me/2016/08/11/intuitive-explanation-convnets/" style="text-decoration: none;color: blue">CNN Tutorial</a></li>
+</ul>
+</div>
+<div class="container-fluid" style="padding-left: 5cm;padding-right: 2cm;font-size:10px; color:white; background-color: hsl(0, 0%, 94%);text-align: left; font-family: arial; font-weight: normal;padding-bottom: 2cm;padding-top: 0.8cm;font-size: 14px">
+		<a href="https://mst.instructure.com/courses/23388" style="text-decoration:none;color: LightSlateGrey ">SE 6213</a>
+		<br>
+		<a href="mailto:dagli@mst.edu?Subject=Hello" target="_top" style="text-decoration:none;color: LightSlateGrey ">Cihan H Dagli</a>
+		<br>
+		<a href="mailto:rgrk6@mst.edu?Subject=Hello" target="_top" style="text-decoration:none;color: LightSlateGrey ">Deepak Gottapu</a>
+
+</div>
+
+<script>
+	var count = 0;
+	var past = 8;
+	var limit = 8
+
+	function forward() {
+		if (count>limit) {count=0}
+		var x = Math.floor(count / document.getElementById("o1").rows.length)
+		var y = count % document.getElementById("o1").rows.length
+		var xep = x+2
+		var yep = y+2
+	    var sum_o1 = 0
+	    var sum_o2 = 0
+	    var sum_o3 = 0
+
+	    clean(past)
+		//document.getElementById("demo").innerHTML = count;
+		for (var i = x; i <= xep; i++) {
+			for (var j = y; j <= yep; j++){
+				document.getElementById("R").rows[i].cells[j].style.background = "pink";
+				document.getElementById("G").rows[i].cells[j].style.background = "LightGreen";
+				document.getElementById("B").rows[i].cells[j].style.background = "LightSkyBlue";
+				sum_o1 = +sum_o1 + (+document.getElementById("R").rows[i].cells[j].innerHTML * +document.getElementById("f1").rows[i-x].cells[j-y].innerHTML);
+				sum_o2 = +sum_o2 + (+document.getElementById("G").rows[i].cells[j].innerHTML * +document.getElementById("f2").rows[i-x].cells[j-y].innerHTML);
+				sum_o3 = +sum_o3 + (+document.getElementById("B").rows[i].cells[j].innerHTML * +document.getElementById("f3").rows[i-x].cells[j-y].innerHTML);
+				}
+	    	}
+
+	    document.getElementById("o1").rows[x].cells[y].innerHTML = sum_o1;
+	    document.getElementById("o1").rows[x].cells[y].style.background = "pink";
+	    document.getElementById("o2").rows[x].cells[y].innerHTML = sum_o2;
+	    document.getElementById("o2").rows[x].cells[y].style.background = "LightGreen";
+	    document.getElementById("o3").rows[x].cells[y].innerHTML = sum_o3;
+	    document.getElementById("o3").rows[x].cells[y].style.background = "LightSkyBlue";
+	    document.getElementById("op").rows[x].cells[y].innerHTML = sum_o1+sum_o2+sum_o3;
+	    
+	    document.getElementById("op").rows[x].cells[y].style.background = "yellow";
+	    past = count
+	    count = count+1
+	    }
+
+	function backward() {
+		count = count-1
+		if (count<0) {count=limit}
+		var x = Math.floor(count / document.getElementById("o1").rows.length)
+		var y = count % document.getElementById("o1").rows.length
+		var xep = x+2
+		var yep = y+2
+
+	    clean(past)
+		//document.getElementById("demo").innerHTML = count;
+		for (var i = x; i <= xep; i++) {
+			for (var j=y; j<=yep; j++){
+				document.getElementById("R").rows[i].cells[j].style.background = "pink";
+				document.getElementById("G").rows[i].cells[j].style.background = "LightGreen";
+				document.getElementById("B").rows[i].cells[j].style.background = "LightSkyBlue";
+				}
+	    	}
+
+	    document.getElementById("o1").rows[x].cells[y].style.background = "pink";
+	    document.getElementById("op").rows[x].cells[y].style.background = "yellow";
+	    document.getElementById("o2").rows[x].cells[y].style.background = "LightGreen";
+	    document.getElementById("o3").rows[x].cells[y].style.background = "LightSkyBlue";
+	    past = count
+	    }    
+
+	function clean(past){
+		var x = Math.floor((past) / document.getElementById("o1").rows.length)
+		var y = (past) % document.getElementById("o1").rows.length
+		var xep = x+2
+		var yep = y+2
+		for (var i = x; i <= xep; i++) {
+			for (var j=y; j<=yep; j++){
+				document.getElementById("R").rows[i].cells[j].style.background = "white";
+				document.getElementById("G").rows[i].cells[j].style.background = "white";
+				document.getElementById("B").rows[i].cells[j].style.background = "white";
+				}
+	    	}
+
+	    document.getElementById("o1").rows[x].cells[y].style.background = "white";
+	    document.getElementById("op").rows[x].cells[y].style.background = "white";
+	    document.getElementById("o2").rows[x].cells[y].style.background = "white";
+	    document.getElementById("o3").rows[x].cells[y].style.background = "white";
+	 
+
+	}
+
+	var count_p=0
+	var p_past=3
+	function p_forward() {
+		if (count_p>3) {count_p=0}
+		var x = Math.floor(count_p / document.getElementById("po").rows.length)
+		var y = count_p % document.getElementById("po").rows.length 
+
+		var xep = x+1
+		var yep = y+1
+
+		var max_val=-1000
+		var temp = 0
+	    p_clean(p_past)
+		var stride = 2
+
+		for (var i = x*stride; i <= x*stride+1; i++) {
+			for (var j=y*stride; j<=y*stride+1; j++){
+				document.getElementById("pi").rows[i].cells[j].style.background = "yellow";
+				if (max_val < +document.getElementById("pi").rows[i].cells[j].innerHTML){max_val = +document.getElementById("pi").rows[i].cells[j].innerHTML}
+				//max_val = +max_val + +document.getElementById("pi").rows[i].cells[j].innerHTML;
+				}
+	    	}
+	    document.getElementById("po").rows[x].cells[y].style.background = "yellow";
+	    document.getElementById("po").rows[x].cells[y].innerHTML = max_val
+	    p_past = count_p
+	    count_p = count_p+1
+	    
+	    }
+
+	function p_clean(p_past){
+		var x = Math.floor((p_past) / document.getElementById("po").rows.length)
+		var y = (p_past) % document.getElementById("po").rows.length
+		var xep = x+2
+		var yep = y+2
+		for (var i = x; i <= xep; i++) {
+			for (var j=y; j<=yep; j++){
+				document.getElementById("pi").rows[i].cells[j].style.background = "white";
+				}
+	    	}
+
+	    document.getElementById("po").rows[x].cells[y].style.background = "white";
+	}
+
+	var pad_mode=0
+	function pad(){
+		if (pad_mode == 0){
+			count=0
+			clean(past)
+			add_pad("R")
+			add_pad("G")
+			add_pad("B")
+			add_pad("o1")
+			add_pad("o2")
+			add_pad("o3")
+			add_pad("op")
+			pad_mode=1
+			limit=24
+			document.getElementById("pad_button").innerHTML = "Remove padding"
+			document.getElementById("caption_1").innerHTML = "Input Image with padding (3x7x7)"
+		}
+		else{
+			count=0
+			clean(past)
+			del_pad("R")
+			del_pad("G")
+			del_pad("B")
+			del_pad("o1")
+			del_pad("o2")
+			del_pad("o3")
+			del_pad("op")
+			pad_mode=0
+			limit=8
+			document.getElementById("pad_button").innerHTML = "Add Padding"
+			document.getElementById("caption_1").innerHTML = "Input Image with no padding (3x5x5)"
+		}	
+	}
+
+	function add_pad(tab_name){
+		var table = document.getElementById(tab_name);
+		var len_t = table.rows.length
+		var row_t = table.insertRow(0);
+		var row_b = table.insertRow(len_t+1);
+		for (var i = 0; i<len_t; i++){
+			row_t.insertCell(i).innerHTML = 0;
+			row_b.insertCell(i).innerHTML = 0;
+		}
+		for (var i = 0; i < table.rows.length; i++) {
+			table.rows[i].insertCell(0).innerHTML=0;
+			table.rows[i].insertCell(table.rows[i].cells.length).innerHTML=0;
+		}	
+	}
+
+	function del_pad(tab_name){
+		var table = document.getElementById(tab_name);
+		var len_t = table.rows.length
+		table.deleteRow(len_t-1)
+		table.deleteRow(0)
+		for (var i=0 ; i<len_t-2 ; i++){
+			table.rows[i].deleteCell(len_t-1)
+			table.rows[i].deleteCell(0)
+		}
+	}
+
+	</script>
+
+</body>
+
+</html>

@@ -355,11 +355,10 @@ def conv_forward(x, w, b, stride, pad):
                     v_end = v_start + h_
                     h_start = wi * stride
                     h_end = h_start + w_
-                    x_slice = x_pad[i, d, v_start:v_end, h_start:h_end]
+                    x_slice = x_pad[i, :, v_start:v_end, h_start:h_end]
                     try:
                         s = x_slice * w[i, d, ...]
-                        out[i, d, h, wi] = np.sum(s)
-                        out[i, d, h, wi] += b[d]
+                        out[i, d, h, wi] = np.sum(s) + b[d]
                     except IndexError:
                         break
     ### End of your code ###
@@ -401,7 +400,7 @@ def conv_backward(dout, cache):
                     h_end = h_start + w_
                     try:
                         x_slice = x_pad[i, d, v_start:v_end, h_start:h_end]
-                        dx_pad[i, d, v_start:v_end, h_start:h_end] += w[i, d, ...] * dout[i, d, h, wi]
+                        dx_pad[i, :, v_start:v_end, h_start:h_end] += w[i, d, ...] * dout[i, d, h, wi]
                         dw[i, d, ...] += x_slice * dout[i, d, h, wi]
                         db[d] += dout[i, d, h, wi]
                     except IndexError:

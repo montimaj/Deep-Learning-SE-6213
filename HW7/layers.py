@@ -348,7 +348,7 @@ def conv_forward(x, w, b, stride, pad):
     #### Type your code here ####
     x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
     for i in range(N):
-        for d in range(D):
+        for f in range(F):
             for h in range(H_out):
                 for wi in range(W_out):
                     v_start = h * stride
@@ -357,8 +357,8 @@ def conv_forward(x, w, b, stride, pad):
                     h_end = h_start + w_
                     x_slice = x_pad[i, :, v_start:v_end, h_start:h_end]
                     try:
-                        s = x_slice * w[i, d, ...]
-                        out[i, d, h, wi] = np.sum(s) + b[d]
+                        s = x_slice * w[i, f, ...]
+                        out[i, f, h, wi] = np.sum(s) + b[f]
                     except IndexError:
                         break
     ### End of your code ###
@@ -391,7 +391,7 @@ def conv_backward(dout, cache):
     x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
     dx_pad = np.pad(dx, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
     for i in range(N):
-        for d in range(D):
+        for f in range(F):
             for h in range(H_out):
                 for wi in range(W_out):
                     v_start = h * stride
@@ -399,10 +399,10 @@ def conv_backward(dout, cache):
                     h_start = wi * stride
                     h_end = h_start + w_
                     try:
-                        x_slice = x_pad[i, d, v_start:v_end, h_start:h_end]
-                        dx_pad[i, :, v_start:v_end, h_start:h_end] += w[i, d, ...] * dout[i, d, h, wi]
-                        dw[i, d, ...] += x_slice * dout[i, d, h, wi]
-                        db[d] += dout[i, d, h, wi]
+                        x_slice = x_pad[i, f, v_start:v_end, h_start:h_end]
+                        dx_pad[i, :, v_start:v_end, h_start:h_end] += w[i, f, ...] * dout[i, f, h, wi]
+                        dw[i, f, ...] += x_slice * dout[i, f, h, wi]
+                        db[f] += dout[i, f, h, wi]
                     except IndexError:
                         break
         dx[i, ...] = dx_pad[i, :, pad:-pad, pad:-pad]

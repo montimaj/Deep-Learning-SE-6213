@@ -83,7 +83,7 @@ data = {'X_train':X_train[0:n],'Y_train':Y_train[0:n],'X_val':X_val[0:30],'Y_val
 
 # Initialize two_layered_NN instance
 from cnn_model import n_layered_NN
-model = n_layered_NN(data,batch_size=30,epochs=5,n=1)
+model = n_layered_NN(data,batch_size=30,epochs=50,n=1, update_rule='SGD_with_momentum')
 # Train the two layered neural network
 start_time = datetime.datetime.now()
 params,loss_history,train_acc_history,val_acc_history=model.train()
